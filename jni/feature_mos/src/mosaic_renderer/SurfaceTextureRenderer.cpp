@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <string.h>
 #include "SurfaceTextureRenderer.h"
 
 #include <GLES2/gl2ext.h>
