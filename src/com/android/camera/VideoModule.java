@@ -1688,6 +1688,17 @@ public class VideoModule extends BaseModule<VideoUI> implements
             mMediaRecorder.setPreviewDisplay(mUI.getSurfaceHolder().getSurface());
         }
     }
+    private int getHighSpeedVideoEncoderBitRate(CamcorderProfile profile, int targetRate) {
+        int bitRate;
+        String key = profile.videoFrameWidth+"x"+profile.videoFrameHeight+":"+targetRate;
+        if (CameraSettings.VIDEO_ENCODER_BITRATE.containsKey(key)) {
+            bitRate = CameraSettings.VIDEO_ENCODER_BITRATE.get(key);
+        } else {
+            Log.i(TAG, "No pre-defined bitrate for "+key);
+            bitRate = (profile.videoBitRate * targetRate) / profile.videoFrameRate;
+        }
+        return bitRate;
+    }
 
     // Prepares media recorder.
     private void initializeRecorder() {
@@ -1791,8 +1802,7 @@ public class VideoModule extends BaseModule<VideoUI> implements
             }
             mMediaRecorder.setOutputFormat(mProfile.fileFormat);
             mMediaRecorder.setVideoFrameRate(mProfile.videoFrameRate);
-            mMediaRecorder.setVideoEncodingBitRate(mProfile.videoBitRate *
-                                                ((isHSR ? captureRate : 30) / 30));
+            mMediaRecorder.setVideoEncodingBitRate(mProfile.videoBitRate);
             mMediaRecorder.setVideoEncoder(mProfile.videoCodec);
             if (isHSR) {
                 Log.i(TAG, "Configuring audio for HSR");
@@ -1828,7 +1838,7 @@ public class VideoModule extends BaseModule<VideoUI> implements
 
             // Profiles advertizes bitrate corresponding to published framerate.
             // In case framerate is different, scale the bitrate
-            int scaledBitrate = Math.round((float)mProfile.videoBitRate * targetFrameRate / mProfile.videoFrameRate);
+            int scaledBitrate = getHighSpeedVideoEncoderBitRate(mProfile, targetFrameRate);
             Log.i(TAG, "Scaled Video bitrate : " + scaledBitrate);
             mMediaRecorder.setVideoEncodingBitRate(scaledBitrate);
         }
